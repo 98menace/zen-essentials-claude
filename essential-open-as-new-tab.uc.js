@@ -3,55 +3,46 @@
   if (window[KEY]) return;
   window[KEY] = true;
 
-  function getEssentialTab(event) {
-    return event.composedPath().find(
-      node =>
-        node?.localName === "tab" &&
-        node.hasAttribute("zen-essential")
-    );
+  const isPlainClick = e =>
+    e.button === 0 && e.detail > 0 &&
+    !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey;
+
+  function getEssentialTab(e) {
+    const path = e.composedPath();
+    if (path.some(n => n?.localName === "toolbarbutton")) return null;
+    return path.find(n => n?.localName === "tab" && n.hasAttribute("zen-essential")) || null;
   }
 
-  function isToolbarButton(event) {
-    return event.composedPath().some(
-      node => node?.localName === "toolbarbutton"
-    );
+  function block(e) {
+    if (!isPlainClick(e) || !getEssentialTab(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
   }
 
-  function suppress(event) {
-    if (event.button !== 0 || isToolbarButton(event)) return;
-
-    const tab = getEssentialTab(event);
+  function onMouseDown(e) {
+    if (!isPlainClick(e)) return;
+    const tab = getEssentialTab(e);
     if (!tab) return;
 
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-  }
-
-  window.addEventListener("mousedown", event => {
-    if (event.button !== 0 || isToolbarButton(event)) return;
-
-    const tab = getEssentialTab(event);
-    if (!tab) return;
+    block(e);
+    if (e.detail !== 1) return; // ignore double-clicks
 
     const url =
       tab._zenPinnedInitialState?.entry?.url ||
       tab.linkedBrowser?.currentURI?.spec;
-
     if (!url || url === "about:blank") return;
 
-    suppress(event);
-
+    const userContextId = tab.userContextId || 0;
     const newTab = gBrowser.addTab(url, {
-      triggeringPrincipal:
-        Services.scriptSecurityManager.getSystemPrincipal()
+      userContextId,
+      triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({ userContextId }),
+      relatedToCurrent: false, // don't insert next to the current tab
     });
-
     gBrowser.selectedTab = newTab;
-  }, true);
+  }
 
-  window.addEventListener("mouseup", suppress, true);
-  window.addEventListener("click", suppress, true);
-
-  console.log("[Essential Open as New Tab] Installed");
+  window.addEventListener("mousedown", onMouseDown, true);
+  window.addEventListener("mouseup", block, true);
+  window.addEventListener("click", block, true);
 })();
