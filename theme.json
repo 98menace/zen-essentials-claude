@@ -1,14 +1,14 @@
 {
   "id": "essential-open-as-new-tab",
-  "name": "Essential Open as New Tab",
+  "name": "Essential Open as New Tab claude",
   "description": "Open Essential tabs as new regular tabs.",
   "author": "98menace",
-  "homepage": "https://github.com/98menace/zen-essential-new-tab",
-  "version": "1.0.3",
+  "homepage": "https://github.com/98menace/zen-essentials-claude/",
+  "version": "1.0.4",
   "scripts": {
     "essential-open-as-new-tab.uc.js": {
       "name": "Essential Open as New Tab",
-      "description": "Opens Essential tabs in new regular tabs.",
+      "description": "Opens Essential tabs in new regular tabs. claude",
       "include": [
         "chrome://browser/content/browser.xhtml"
       ]
